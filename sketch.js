@@ -107,7 +107,7 @@ function loopGen() {
 		genes.push({dna: rank1Snake.snakeDna, dnaType: '1st'});
 		genes.push({dna: rank2Snake.snakeDna, dnaType: '2nd'});
 		genes.push({dna: rank3Snake.snakeDna, dnaType: '3rd'});
-		genes.push({dna: rank3Snake.snakeDna, dnaType: '4th'});
+		genes.push({dna: rank4Snake.snakeDna, dnaType: '4th'});
 		/*
 		for (var i = 0; i < 8; i++) { 
 			var geneChildren = ga.uniformCrossover(rank1Snake.dna, rank2Snake.dna);
