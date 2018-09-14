@@ -1,13 +1,36 @@
-Fruit = function(canvasWidth, canvasHeight, size) {
+Fruit = function(canvasX, canvasY, canvasWidth, canvasHeight, size) {
+	this.canvasX = canvasX;
+	this.canvasY = canvasY;
 	this.canvasWidth = canvasWidth;
 	this.canvasHeight = canvasHeight;
 	this.size = size;
-	this.createRandomLoc();	
 }
-
+/*
 Fruit.prototype.createRandomLoc = function() {
-	this.x = Math.floor(Math.random() * this.canvasWidth / this.size) * this.size;
-	this.y = Math.floor(Math.random() * this.canvasHeight / this.size) * this.size;
+	this.x = this.canvasX + (Math.floor(Math.random() * this.canvasWidth / this.size) * this.size);
+	this.y = this.canvasY + (Math.floor(Math.random() * this.canvasHeight / this.size) * this.size);
+}
+*/
+Fruit.prototype.createRandomLocWithSnake = function(snake) {
+	var created = false;
+	while (!created) {
+		var samePos = false;
+		this.x = this.canvasX + (Math.floor(Math.random() * this.canvasWidth / this.size) * this.size);
+		this.y = this.canvasY + (Math.floor(Math.random() * this.canvasHeight / this.size) * this.size);
+		for (var i = 0; i < snake.tailLength; i++) {
+			if (this.x == snake.tailX[i] && this.y == snake.tailY[i]) {
+				samePos = true;
+			}
+		}
+		if (this.x == snake.x && this.y == snake.y) {
+			samePos = true;
+		}
+		if (samePos == true) {
+			created = false;
+		} else {
+			created = true;
+		}
+	}
 }
 
 Fruit.prototype.draw = function() {
