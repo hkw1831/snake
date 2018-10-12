@@ -5,12 +5,7 @@ Fruit = function(canvasX, canvasY, canvasWidth, canvasHeight, size) {
 	this.canvasHeight = canvasHeight;
 	this.size = size;
 }
-/*
-Fruit.prototype.createRandomLoc = function() {
-	this.x = this.canvasX + (Math.floor(Math.random() * this.canvasWidth / this.size) * this.size);
-	this.y = this.canvasY + (Math.floor(Math.random() * this.canvasHeight / this.size) * this.size);
-}
-*/
+
 Fruit.prototype.createRandomLocWithSnake = function(snake) {
 	var created = false;
 	while (!created) {
@@ -35,6 +30,7 @@ Fruit.prototype.createRandomLocWithSnake = function(snake) {
 
 Fruit.prototype.draw = function() {
 	stroke(0, 0, 0)
+	fill(255, 255, 255)
 	rect(this.x, this.y, this.size, this.size)
 }
 

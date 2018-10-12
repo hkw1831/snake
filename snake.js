@@ -1,4 +1,5 @@
-var Snake = function(x, y, canvasX, canvasY, canvasWidth, canvasHeight, bodySize, snakeDna, dnaType){
+var Snake = function(index, x, y, canvasX, canvasY, canvasWidth, canvasHeight, bodySize, snakeDna, dnaType){
+	this.index = index;
 	this.x = canvasX + x;
 	this.y = canvasY + y;
 	this.canvasX = canvasX;
@@ -18,6 +19,7 @@ var Snake = function(x, y, canvasX, canvasY, canvasWidth, canvasHeight, bodySize
 	this.snakeDna = snakeDna;
 	this.neuralNetwork = new SnakeNeuralNetwork(this.snakeDna);
 	this.dnaType = dnaType;
+	this.noBoundary = false;
 }
 
 Snake.prototype.calculateMove = function(fruit) {
@@ -67,18 +69,20 @@ Snake.prototype.moveDirection = function(direction) {
 Snake.prototype.move = function(x, y) {
 	var newX = this.x + x * this.bodySize;
 	var newY = this.y + y * this.bodySize;
-// 	if (newY > this.canvasY + this.canvasHeight - this.bodySize) {
-// 		newY = this.canvasY;
-// 	}
-// 	if (newY < this.canvasY) {
-// 		newY = this.canvasY + this.canvasHeight - this.bodySize;
-// 	}
-// 	if (newX > this.canvasX + this.canvasWidth - this.bodySize) {
-// 		newX = this.canvasX;
-// 	}
-// 	if (newX < this.canvasX) {
-// 		newX = this.canvasX + this.canvasWidth - this.bodySize;
-// 	}
+	if (this.noBoundary) {
+		if (newY > this.canvasY + this.canvasHeight - this.bodySize) {
+			newY = this.canvasY;
+		}
+		if (newY < this.canvasY) {
+			newY = this.canvasY + this.canvasHeight - this.bodySize;
+		}
+		if (newX > this.canvasX + this.canvasWidth - this.bodySize) {
+			newX = this.canvasX;
+		}
+		if (newX < this.canvasX) {
+			newX = this.canvasX + this.canvasWidth - this.bodySize;
+		}
+	}
 	this.x = newX;
 	this.y = newY;
 }
@@ -107,7 +111,6 @@ Snake.prototype.die = function(fruit) {
 }
 
 Snake.prototype.died = function() {
-// 	console.log(this.health);
 	for (var i = 0; i < this.tailLength - 3; i++) {
 		if (dist(this.x, this.y, this.tailX[i], this.tailY[i]) < this.bodySize/2) {
 			return true;
@@ -127,23 +130,41 @@ Snake.prototype.died = function() {
 
 Snake.prototype.draw = function() {
 	stroke(0, 0, 0)
+	if (this.health <= 50) {
+		fill(0, 0, 255)
+	} else {
+		fill(255, 255, 255)
+	}
 	rect(this.x, this.y, this.bodySize, this.bodySize)
 	for (var i = 0; i < this.tailLength; i++) {
 		rect(this.tailX[i], this.tailY[i], this.bodySize, this.bodySize);
 	}
 }
 
-// Neural Network part:
+Snake.prototype.getRoadInfo2 = function(fruit) {
+	info = [];
+	var numRoadInfo = 3 * (this.canvasX / this.bodySize) * (this.canvasY / this.bodySize); // 400 * 3
+	for (var i = 0; i < numRoadInfo; i++) {
+		info.push(Number(0));
+	}
+	// first 100; snake head
+	info[this.convertPosToIndex(this.x, this.y)] = Number(1);
+	// second 100: snake body
+	for (var i = 0; i < this.tailLength; i++) {
+		info[400 + this.convertPosToIndex(this.tailX[i], this.tailY[i])] = Number(1);
+	}
+	
+	// third 100; fruit
+	info[800 + this.convertPosToIndex(fruit.x, fruit.y)] = Number(1);
+	return info;
+}
 
-// arr[0-7]: will hit (true: 1, false: 2) in the following direction: 
-// x means the head of snake:
-// +---+
-// | 0 |
-// |3x1|
-// | 2 |
-// +---+
-// arr[8-9]: x, y coord of snake head
-// arr[10-11]: x, y coord of fruit
+Snake.prototype.convertPosToIndex = function(x, y) {
+	var col = (x - this.canvasX)/this.bodySize;
+	var row = (y - this.canvasY)/this.bodySize;
+	return row * (this.canvasWidth) + col;
+}
+
 Snake.prototype.getRoadInfo = function(fruit) {
 	info = [];/* 
 	info.push(this.hitTop());
@@ -166,38 +187,78 @@ Snake.prototype.getRoadInfo = function(fruit) {
 	info.push(this.distBottomBody() / this.longestDist);
 	info.push(this.distLeftBody() / this.longestDist);
 	info.push(this.distRightBody() / this.longestDist); */
-// 	info.push((this.distFront() / this.longestDist));
-// 	info.push((this.distBack() / this.longestDist));
-// 	info.push((this.distLeft() / this.longestDist));
-// 	info.push((this.distRight() / this.longestDist));
-	info.push(this.hitFront());
-	info.push(this.hitBack());
-	info.push(this.hitLeft());
-	info.push(this.hitRight());
-	info.push(this.fruitInFront(fruit));
-	info.push(this.fruitInBack(fruit));
-	info.push(this.fruitInLeft(fruit));
-	info.push(this.fruitInRight(fruit));
-	info.push((this.distFruitFront(fruit) / this.longestDist));
-	info.push((this.distFruitSide(fruit) / this.longestDist));
-	info.push((this.distWallBodyFrontSide() / this.longestDist));
-	info.push((this.distWallBodyBackSide() / this.longestDist));
-	info.push((this.distWallBodyLeftSide() / this.longestDist));
-	info.push((this.distWallBodyRightSide() / this.longestDist));
+// 	info.push((this.distFrontFace() / this.longestDist));
+// 	info.push((this.distBackFace() / this.longestDist));
+// 	info.push((this.distLeftFace() / this.longestDist));
+// 	info.push((this.distRightFace() / this.longestDist));
+
+//18
+// 	info.push(this.hitFront());
+// 	info.push(this.hitBack());
+// 	info.push(this.hitLeft());
+// 	info.push(this.hitRight());
 // 	info.push(this.nearWallBodyFront());
 // 	info.push(this.nearWallBodySide());
-	info.push(this.fruitInFrontLeft(fruit))
-	info.push(this.fruitInFrontRight(fruit))
- 	info.push((this.diagDist - dist(this.x, this.y, fruit.x, fruit.y)) / this.diagDist);
- 	info.push(this.fruitInClosestFront(fruit));
- 	info.push(this.fruitInClosestLeft(fruit));
-	info.push(this.fruitInClosestRight(fruit));
+// 	info.push((this.distWallBodyFrontSideFace() / this.longestDist));
+// 	info.push((this.distWallBodyBackSideFace() / this.longestDist));
+
+
+
+
+ 	// Face view
+ 	// boolean value
+ 	info.push(this.fruitInFrontFace(fruit));
+	info.push(this.fruitInBackFace(fruit));
+	info.push(this.fruitInLeftFace(fruit));
+	info.push(this.fruitInRightFace(fruit));
+	info.push(this.fruitInFrontLeftFace(fruit))
+	info.push(this.fruitInFrontRightFace(fruit))
+ 	info.push(this.fruitInClosestFrontFace(fruit));
+ 	info.push(this.fruitInClosestLeftFace(fruit));
+	info.push(this.fruitInClosestRightFace(fruit));
+	
+	info.push(this.hitFrontWallFace());
+	info.push(this.hitLeftWallFace());
+	info.push(this.hitRightWallFace());
+	info.push(this.hitFrontBodyFace());
+	info.push(this.hitLeftBodyFace());
+	info.push(this.hitRightBodyFace());
+	
+	// distance value
+	info.push((this.distFruitFrontFace(fruit) / this.longestDist));
+	info.push((this.distFruitSideFace(fruit) / this.longestDist));
+	info.push((this.distWallBodyFrontSideFace() / this.longestDist));
+	info.push((this.distWallBodyLeftSideFace() / this.longestDist));
+	info.push((this.distWallBodyRightSideFace() / this.longestDist));
+	
+	
+	// Map view
+	// boolean value
+	
+	// distance value
+//	info.push((this.diagDist - dist(this.x, this.y, fruit.x, fruit.y)) / this.diagDist);
+	
+	
+	// TODO should add distBack etc?
+	
+	/*
+	info.push(this.fruitInFront(fruit));
+	info.push(this.fruitInLeft(fruit));
+	info.push(this.fruitInRight(fruit));
+	info.push(this.hitFrontWallFace());
+	info.push(this.hitLeftWallFace());
+	info.push(this.hitRightWallFace());
+	info.push(this.hitFrontBodyFace());
+	info.push(this.hitLeftBodyFace());
+	info.push(this.hitRightBodyFace());
+	info.push(this.nearWallBodySide());
+	*/
 
 // 	console.log(info.toString());
 	return info;
 }
 
-Snake.prototype.fruitInClosestFront = function(fruit) {
+Snake.prototype.fruitInClosestFrontFace = function(fruit) {
 	if (this.direction == 'up' && this.x == fruit.x && this.y - fruit.y == this.bodySize) {
 		return Number(1);
 	}
@@ -213,7 +274,7 @@ Snake.prototype.fruitInClosestFront = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInClosestLeft = function(fruit) {
+Snake.prototype.fruitInClosestLeftFace = function(fruit) {
 	if (this.direction == 'up' && this.y == fruit.y && this.x - fruit.x == this.bodySize) {
 		return Number(1);
 	}
@@ -229,7 +290,7 @@ Snake.prototype.fruitInClosestLeft = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInClosestRight = function(fruit) {
+Snake.prototype.fruitInClosestRightFace = function(fruit) {
 	if (this.direction == 'up' && this.y == fruit.y && fruit.x - this.x == this.bodySize) {
 		return Number(1);
 	}
@@ -245,7 +306,7 @@ Snake.prototype.fruitInClosestRight = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInFrontLeft = function(fruit) {
+Snake.prototype.fruitInFrontLeftFace = function(fruit) {
 	if (this.direction == 'up' && fruit.x < this.x && fruit.y < this.y){
 		return Number(1);
 	}
@@ -261,7 +322,7 @@ Snake.prototype.fruitInFrontLeft = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInFrontRight = function(fruit) {
+Snake.prototype.fruitInFrontRightFace = function(fruit) {
 	if (this.direction == 'up' && fruit.x > this.x && fruit.y < this.y){
 		return Number(1);
 	}
@@ -277,7 +338,7 @@ Snake.prototype.fruitInFrontRight = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInFront = function(fruit) {
+Snake.prototype.fruitInFrontFace = function(fruit) {
 	if (this.direction == 'up' && fruit.x == this.x && fruit.y > this.y){
 		return Number(1);
 	}
@@ -293,7 +354,7 @@ Snake.prototype.fruitInFront = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInBack = function(fruit) {
+Snake.prototype.fruitInBackFace = function(fruit) {
 	if (this.direction == 'up' && fruit.x == this.x && fruit.y < this.y){
 		return Number(1);
 	}
@@ -309,7 +370,7 @@ Snake.prototype.fruitInBack = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInLeft = function(fruit) {
+Snake.prototype.fruitInLeftFace = function(fruit) {
 	if (this.direction == 'up' && fruit.y == this.y && fruit.x < this.x){
 		return Number(1);
 	}
@@ -325,7 +386,7 @@ Snake.prototype.fruitInLeft = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.fruitInRight = function(fruit) {
+Snake.prototype.fruitInRightFace = function(fruit) {
 	if (this.direction == 'up' && fruit.y == this.y && fruit.x > this.x){
 		return Number(1);
 	}
@@ -341,7 +402,7 @@ Snake.prototype.fruitInRight = function(fruit) {
 	return Number(-1);
 }
 
-Snake.prototype.distFruitFront = function(fruit) {
+Snake.prototype.distFruitFrontFace = function(fruit) {
 	if (this.direction == 'up'){
 		return this.y - fruit.y;
 	}
@@ -353,11 +414,10 @@ Snake.prototype.distFruitFront = function(fruit) {
 	}
 	else if (this.direction == 'right') {
 		return fruit.x - this.x;
-		
 	}
 }
 
-Snake.prototype.distFruitSide = function(fruit) {
+Snake.prototype.distFruitSideFace = function(fruit) {
 	if (this.direction == 'up'){
 		return fruit.x - this.x;
 	}
@@ -372,44 +432,44 @@ Snake.prototype.distFruitSide = function(fruit) {
 	}
 }
 
-Snake.prototype.distWallBodyLeftSide = function() {
-	return this.distLeft();
+Snake.prototype.distWallBodyLeftSideFace = function() {
+	return this.distLeftFace();
 }
 
-Snake.prototype.distWallBodyRightSide = function() {
-	return -this.distRight();
+Snake.prototype.distWallBodyRightSideFace = function() {
+	return -this.distRightFace();
 }
 
-Snake.prototype.distWallBodyFrontSide = function() {
-	return -this.distFront();
+Snake.prototype.distWallBodyFrontSideFace = function() {
+	return -this.distFrontFace();
 }
 
-Snake.prototype.distWallBodyBackSide = function() {
-	return this.distBack();
+Snake.prototype.distWallBodyBackSideFace = function() {
+	return this.distBackFace();
 }
 
 // if right side is wider than left side return 1, if same return 0, else return -1;
 Snake.prototype.nearWallBodySide = function() {
-	if (this.distLeft() == this.distRight()) {
+	if (this.distLeftFace() == this.distRightFace()) {
 		return Number(0);
 	}
-	if (this.distLeft() < this.distRight()) {
+	if (this.distLeftFace() < this.distRightFace()) {
 		return Number(1);
 	}
-	if (this.distLeft() > this.distRight()) {
+	if (this.distLeftFace() > this.distRightFace()) {
 		return Number(-1);
 	}
 }
 
 // if front side is wider than back side return -1, if same return 0, else return 1;
 Snake.prototype.nearWallBodyFront = function() {
-	if (this.distFront() == this.distBack()) {
+	if (this.distFrontFace() == this.distBackFace()) {
 		return Number(0);
 	}
-	if (this.distFront() < this.distBack()) {
+	if (this.distFrontFace() < this.distBackFace()) {
 		return Number(-1);
 	}
-	if (this.distFront() > this.distBack()) {
+	if (this.distFrontFace() > this.distBackFace()) {
 		return Number(1);
 	}
 }
@@ -431,19 +491,175 @@ Snake.prototype.distRightWall = function() {
 }
 
 Snake.prototype.hitFront = function() {
-	return this.distFront() <= this.bodySize ? Number(-1) : Number(1);
+	return this.distFrontFace() <= this.bodySize ? Number(-1) : Number(1);
 }
 Snake.prototype.hitBack = function() {
-	return this.distBack() <= this.bodySize ? Number(-1) : Number(1);
+	return this.distBackFace() <= this.bodySize ? Number(-1) : Number(1);
 }
 Snake.prototype.hitLeft = function() {
-	return this.distLeft() <= this.bodySize ? Number(-1) : Number(1);
+	return this.distLeftFace() <= this.bodySize ? Number(-1) : Number(1);
 }
 Snake.prototype.hitRight = function() {
-	return this.distRight() <= this.bodySize ? Number(-1) : Number(1);
+	return this.distRightFace() <= this.bodySize ? Number(-1) : Number(1);
 }
 
-Snake.prototype.distFront = function() {
+Snake.prototype.hitFrontWallFace = function() {
+	if (this.direction == 'up' && this.y == this.canvasY) {
+		return Number(1);
+	}
+	if (this.direction == 'down' && this.y + this.bodySize == this.canvasY + this.canvasHeight) {
+		return Number(1);
+	}
+	if (this.direction == 'left' && this.x == this.canvasX) {
+		return Number(1);	
+	}
+	if (this.direction == 'right' && this.x + this.bodySize == this.canvasX + this.canvasHeight) {
+		return Number(1);
+	}
+	return Number(-1);
+}
+
+Snake.prototype.hitLeftWallFace = function() {
+	if (this.direction == 'up' && this.x == this.canvasX) {
+		return Number(1);
+	}
+	if (this.direction == 'down' && this.x + this.bodySize == this.canvasX + this.canvasHeight) {
+		return Number(1);
+	}
+	if (this.direction == 'left' && this.y + this.bodySize == this.canvasY + this.canvasHeight) {
+		return Number(1);	
+	}
+	if (this.direction == 'right' && this.y == this.canvasY) {
+		return Number(1);
+	}
+	return Number(-1);
+}
+
+Snake.prototype.hitRightWallFace = function() {
+	if (this.direction == 'up' && this.x + this.bodySize == this.canvasX + this.canvasHeight) {
+		return Number(1);
+	}
+	if (this.direction == 'down' && this.x == this.canvasX) {
+		return Number(1);
+	}
+	if (this.direction == 'left' && this.y == this.canvasY) {
+		return Number(1);	
+	}
+	if (this.direction == 'right' && this.y + this.bodySize == this.canvasY + this.canvasHeight) {
+		return Number(1);
+	}
+	return Number(-1);
+}
+
+Snake.prototype.hitFrontBodyFace = function() {
+	if (this.direction == 'up') {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.x == this.tailX[i] && this.y == this.tailY[i] + this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	if (this.direction == 'down'/* && this.x == this.canvasX*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.x == this.tailX[i] && this.y == this.tailY[i] - this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	if (this.direction == 'left'/* && this.y == this.canvasY*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.y == this.tailY[i] && this.x == this.tailX[i] + this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);	
+	}
+	if (this.direction == 'right'/* && this.y + this.bodySize == this.canvasY + this.canvasHeight*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.y == this.tailY[i] && this.x == this.tailX[i] - this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	return Number(-1);
+}
+
+Snake.prototype.hitLeftBodyFace = function() {
+	if (this.direction == 'up') {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.y == this.tailY[i] && this.x == this.tailX[i] + this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	if (this.direction == 'down'/* && this.x == this.canvasX*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.y == this.tailY[i] && this.x == this.tailX[i] - this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	if (this.direction == 'left'/* && this.y == this.canvasY*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.x == this.tailX[i] && this.y == this.tailY[i] - this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);	
+	}
+	if (this.direction == 'right'/* && this.y + this.bodySize == this.canvasY + this.canvasHeight*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.x == this.tailX[i] && this.y == this.tailY[i] + this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	return Number(-1);
+}
+
+Snake.prototype.hitRightBodyFace = function() {
+	if (this.direction == 'up') {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.y == this.tailY[i] && this.x == this.tailX[i] - this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	if (this.direction == 'down'/* && this.x == this.canvasX*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.y == this.tailY[i] && this.x == this.tailX[i] + this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	if (this.direction == 'left'/* && this.y == this.canvasY*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.x == this.tailX[i] && this.y == this.tailY[i] + this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);	
+	}
+	if (this.direction == 'right'/* && this.y + this.bodySize == this.canvasY + this.canvasHeight*/) {
+		for (var i = 0; i < this.tailLength; i++) {
+			if (this.x == this.tailX[i] && this.y == this.tailY[i] - this.bodySize) {
+				return Number(1);
+			}
+		}
+		return Number(-1);
+	}
+	return Number(-1);
+}
+
+Snake.prototype.distFrontFace = function() {
 	if (this.direction == 'up'){
 		return this.distTopBody();
 	}
@@ -458,7 +674,7 @@ Snake.prototype.distFront = function() {
 	}
 }
 
-Snake.prototype.distBack = function() {
+Snake.prototype.distBackFace = function() {
 	if (this.direction == 'up'){
 		return this.distBottomBody();
 	}
@@ -473,7 +689,7 @@ Snake.prototype.distBack = function() {
 	}
 }
 
-Snake.prototype.distLeft = function() {
+Snake.prototype.distLeftFace = function() {
 	if (this.direction == 'up'){
 		return this.distLeftBody();
 	}
@@ -488,7 +704,7 @@ Snake.prototype.distLeft = function() {
 	}
 }
 
-Snake.prototype.distRight = function() {
+Snake.prototype.distRightFace = function() {
 	if (this.direction == 'up'){
 		return this.distRightBody();
 	}
@@ -618,7 +834,7 @@ Snake.prototype.fruitInBottomLeft = function(fruit) {
 Snake.prototype.fruitInBottomRight = function(fruit) {
 	return (this.x < fruit.x && this.y < fruit.y) ? Number(1) : Number(0);
 }
-
+/**
 Snake.prototype.fruitInLeft = function(fruit) {
 	return (this.x < fruit.x && this.y == fruit.y) ? Number(1) : Number(0);
 }
@@ -634,3 +850,4 @@ Snake.prototype.fruitInFront = function(fruit) {
 Snake.prototype.fruitInBack = function(fruit) {
 	return (this.x == fruit.x && this.y < fruit.y) ? Number(1) : Number(0);
 }
+*/

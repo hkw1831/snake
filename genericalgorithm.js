@@ -2,8 +2,6 @@ GA = function() {
 	
 }
 
-
-
 GA.prototype.cross = function(dnaParent1, dnaParent2) {
 	dnaChildren1 = [];
 	dnaChildren2 = [];
@@ -66,17 +64,22 @@ GA.prototype.intermediateCrossover25 = function(dnaParent1, dnaParent2, desc) {
 }
 
 // only do this first
-GA.prototype.uniformCrossover = function(snakeDnaParent1, snakeDnaParent2) {
+GA.prototype.uniformCrossover = function(snakeDnaParent1, snakeDnaParent2, crossWeightsDna) {
 	dnaWeightsChildren1 = [];
 	dnaWeightsChildren2 = [];
 	for (var i = 0; i < snakeDnaParent1.weightsDna.length; i++) {
-// 		if (Math.random() >= 0.5) {
+		if (crossWeightsDna) {
+			if (Math.random() >= 0.5) {
+				dnaWeightsChildren1.push(snakeDnaParent1.weightsDna[i]);
+				dnaWeightsChildren2.push(snakeDnaParent2.weightsDna[i]);
+			} else {
+				dnaWeightsChildren1.push(snakeDnaParent2.weightsDna[i]);
+				dnaWeightsChildren2.push(snakeDnaParent1.weightsDna[i]);			
+			}			
+		} else {
 			dnaWeightsChildren1.push(snakeDnaParent1.weightsDna[i]);
 			dnaWeightsChildren2.push(snakeDnaParent2.weightsDna[i]);
-// 		} else {
-// 			dnaWeightsChildren1.push(snakeDnaParent2.weightsDna[i]);
-// 			dnaWeightsChildren2.push(snakeDnaParent1.weightsDna[i]);			
-// 		}
+		}
 	}
 	dnaBiasesChildren1 = [];
 	dnaBiasesChildren2 = [];
@@ -89,29 +92,38 @@ GA.prototype.uniformCrossover = function(snakeDnaParent1, snakeDnaParent2) {
 			dnaBiasesChildren2.push(snakeDnaParent1.biasesDna[i]);			
 		}
 	}
+	mutateProb = 0.05
+	if (crossWeightsDna) {
+		mutateProb = 0.02
+	}
+	
 	for (var i = 0; i < dnaWeightsChildren1.length; i++) {
-		if (Math.random() < 0.2) {
-			dnaWeightsChildren1[i]  = dnaWeightsChildren1[i] + (Math.random() * 2 - 1) * 0.5;
+		if (Math.random() < mutateProb) {
+			dnaWeightsChildren1[i] = dnaWeightsChildren1[i] + (Math.random() * 2 - 1) * 20;
 		}
 	}
 	for (var i = 0; i < dnaWeightsChildren2.length; i++) {
-		if (Math.random() < 0.2) {
-			dnaWeightsChildren2[i]  = dnaWeightsChildren2[i] + (Math.random() * 2 - 1) * 0.5;
+		if (Math.random() < mutateProb) {
+			dnaWeightsChildren2[i] = dnaWeightsChildren2[i] + (Math.random() * 2 - 1) * 20;
 		}
 	}
 	for (var i = 0; i < dnaBiasesChildren1.length; i++) {
-		if (Math.random() < 0.2) {
-			dnaBiasesChildren1[i]  = dnaBiasesChildren1[i] + (Math.random() * 2 - 1) * 0.5;
+		if (Math.random() < mutateProb) {
+			dnaBiasesChildren1[i] = dnaBiasesChildren1[i] * (Math.random() * 2 - 1) * 20;
 		}
 	}
 	for (var i = 0; i < dnaBiasesChildren2.length; i++) {
-		if (Math.random() < 0.2) {
-			dnaBiasesChildren2[i]  = dnaBiasesChildren2[i] + (Math.random() * 2 - 1) * 0.5;
+		if (Math.random() < mutateProb) {
+			dnaBiasesChildren2[i] = dnaBiasesChildren2[i] * (Math.random() * 2 - 1) * 20;
 		}
 	}
+
 	dnaChildren1 = new SnakeNeuralNetworkDna(dnaWeightsChildren1, dnaBiasesChildren1);
 	dnaChildren2 = new SnakeNeuralNetworkDna(dnaWeightsChildren2, dnaBiasesChildren2);
-	return {gene1: {dna: dnaChildren1, dnaType: 'uniformCrossover'}, gene2: {dna: dnaChildren2, dnaType: 'uniformCrossover'}}
+	if (crossWeightsDna) {
+		return {gene1: {dna: dnaChildren1, dnaType: 'uniformCrossoverCrossWeight'}, gene2: {dna: dnaChildren2, dnaType: 'uniformCrossoverCrossWeight'}}
+	}
+	return {gene1: {dna: dnaChildren1, dnaType: 'uniformCrossoverNoCrossWeight'}, gene2: {dna: dnaChildren2, dnaType: 'uniformCrossoverNoCrossWeight'}}
 }
 
 GA.prototype.mutateRange = function(dnaParent1, prob) {

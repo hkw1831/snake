@@ -54,10 +54,19 @@ SnakeNeuralNetwork = function(snakeDna) {
 // 	this.dna = []
 	this.weightsDna = snakeDna.weightsDna;
 	this.biasesDna = snakeDna.biasesDna;
+	
+	// partial road info
 	this.inputNum = 20;
-	this.hiddenLayer0NodeNum = 20;
-	this.hiddenLayer1NodeNum = 20;
-	this.outputNodeNum = 3;
+	this.hiddenLayer0NodeNum = 40;
+	this.hiddenLayer1NodeNum = 40;
+	this.outputNodeNum = 4;
+	
+	// full road info
+// 	this.inputNum = 1200;
+// 	this.hiddenLayer0NodeNum = 20;
+// 	this.hiddenLayer1NodeNum = 10;
+// 	this.outputNodeNum = 4;
+
 	this.nodeNum = this.hiddenLayer0NodeNum + this.hiddenLayer1NodeNum + this.outputNodeNum;
 	
 	var layer0 = [];
@@ -134,7 +143,13 @@ SnakeNeuralNetwork.prototype.setNetwork = function(snake) {
 // }
 
 SnakeNeuralNetwork.prototype.calculate = function(snake, fruit) {
-	var roadInfo = snake.getRoadInfo(fruit);
+	var roadInfo = snake.getRoadInfo(fruit); // partial info
+//	var roadInfo = snake.getRoadInfo2(fruit); // full info, 1200 input info
+	
+	if (!snake.isDead && roadInfo[1] == Number(1)){
+		console.log("index=" + snake.index + ",snake{x=" + snake.x + ", y=" + snake.y + ", dir=" + snake.direction + "}, fruit{x=" + fruit.x + ", y=" + fruit.y + "} + road=" + roadInfo.toString());
+	}
+	
 // 	var dna = snake.dna;
 // 	console.log(roadInfo + " " + dna);
 // 	console.log(roadInfo);
