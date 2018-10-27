@@ -30,8 +30,9 @@ Fruit.prototype.createRandomLocWithSnake = function(snake) {
 
 Fruit.prototype.draw = function() {
 	stroke(0, 0, 0)
-	fill(255, 255, 255)
+	fill(255, 0, 0)
 	rect(this.x, this.y, this.size, this.size)
+	fill(255, 255, 255)
 }
 
 Fruit.prototype.changePos = function() {

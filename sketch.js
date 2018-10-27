@@ -12,13 +12,15 @@ function setup() {
 // 	network = new SnakeNeuralNetwork();
 
 //  part road info
-	var numInput = 20;
-	var numLayer0 = 40;
-	var numLayer1 = 40;
+	var numInput = 10;
+	var numLayer0 = 10;
+	var numLayer1 = 10;
+	var numLayer2 = 10;
+	var numLayer3 = 10;
 	var numOutput = 3;
 
-	dnaWeightsSize = numInput*numLayer0 + numLayer0*numLayer1 + numLayer1*numOutput;
-	dnaBiasesSize = numLayer0 + numLayer1 + numOutput;
+	dnaWeightsSize = numInput*numLayer0 + numLayer0*numLayer1 + numLayer1*numLayer2 + numLayer2*numLayer3 + numLayer3*numOutput;
+	dnaBiasesSize = numLayer0 + numLayer1 + numLayer2 + numLayer3 + numOutput;
 	
 	// full road info
 // 	dnaWeightsSize = 1200*20 + 20*10 + 10*4;
@@ -107,7 +109,7 @@ function loopGen() {
 // 		console.log(sortable);
 // 		var rank1Snake = getHighestSnake(sortable, 0);
 		
-		if (getHighestSnake(sortable, 0).score <= 600) {
+		if (getHighestSnake(sortable, 0).score <= 200) {
 			/*
 		for (var i = 0; i < numCol; i++) {
 			for (var j = 0; j < numRow; j++) {
@@ -160,10 +162,14 @@ function loopGen() {
 		var snake1st = getHighestSnake(sortable, 0);
 		var snake2nd = getHighestSnake(sortable, 1);
 		var snake3rd = getHighestSnake(sortable, 2);
+		var snake4th = getHighestSnake(sortable, 3);
+		var snake5th = getHighestSnake(sortable, 4);
+		var snake6th = getHighestSnake(sortable, 5);				
 
 		if (snake1st.score > maxFitness) {
 			maxFitness = snake1st.score;
-
+		}
+/*
 			dnaWeightsKing = []
 			dnaBiasesKing = []
 			for (var i = 0; i < snake1st.snakeDna.weightsDna.length; i++) {
@@ -176,13 +182,15 @@ function loopGen() {
 			kingGene = {dna: kingDna, dnaType: 'king'}
 		}
 		genes.push(kingGene)
-		
+		*/
 // 		var geneChild1 = {dna: geneChildren.gene1.dna, dnaType: geneChildren.gene1.dnaType};
 // 		var geneChild2 = {dna: geneChildren.gene2.dna, dnaType: geneChildren.gene2.dnaType}
 		genes.push({dna: snake1st.snakeDna, dnaType: '1st'});
 		genes.push({dna: snake2nd.snakeDna, dnaType: '2nd'});
 		genes.push({dna: snake3rd.snakeDna, dnaType: '3rd'});
-		
+		genes.push({dna: snake4th.snakeDna, dnaType: '4th'});
+		genes.push({dna: snake5th.snakeDna, dnaType: '5th'});
+		genes.push({dna: snake6th.snakeDna, dnaType: '6th'});		
 		
 		
 //		var snake1 = getHighestSnake(sortable, Math.floor(0));
@@ -208,8 +216,8 @@ function loopGen() {
 		}
 		*/
 		for (var i = 0; i < 15; i++) {
-			var snake1 = getHighestSnake(sortable, Math.floor(Math.random() * 4));
-			var snake2 = getHighestSnake(sortable, Math.floor(Math.random() * 4));
+			var snake1 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
+			var snake2 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
 			var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, false);
 // 						var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, "uniform crossover");
 			var geneChild1 = {dna: geneChildren.gene1.dna, dnaType: geneChildren.gene1.dnaType};
@@ -217,9 +225,9 @@ function loopGen() {
 			genes.push(geneChild1);
 			genes.push(geneChild2);
 		}
-		for (var i = 0; i < 15; i++) {
-			var snake1 = getHighestSnake(sortable, Math.floor(Math.random() * 4));
-			var snake2 = getHighestSnake(sortable, Math.floor(Math.random() * 4));
+		for (var i = 0; i < 14; i++) {
+			var snake1 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
+			var snake2 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
 			var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, true);
 // 						var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, "uniform crossover");
 			var geneChild1 = {dna: geneChildren.gene1.dna, dnaType: geneChildren.gene1.dnaType};
@@ -321,10 +329,10 @@ function generateDna(dnaWeightsSize, dnaBiasesSize) {
 	weightsDna = [];
 	biasesDna = [];
 	for (var i = 0; i < dnaWeightsSize; i++) {
-		weightsDna.push(Math.random() * 40 - 20);
+		weightsDna.push(Math.random() * 80 - 40);
 	}
 	for (var i = 0; i < dnaBiasesSize; i++) {
-		biasesDna.push(Math.random() * 40 - 20);
+		biasesDna.push(Math.random() * 80 - 40);
 	}
 // 	console.log("dna: " + dna);
 	return new SnakeNeuralNetworkDna(weightsDna, biasesDna);
@@ -508,6 +516,9 @@ function draw() {
 				snakes[i].draw();
 				fruits[i].draw();				
 			}
+		}
+		if (snakes[i].isDead) {
+			snakes[i].drawDeath();
 		}
 		if (allDead()) {
 // 			setup();

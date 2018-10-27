@@ -56,10 +56,12 @@ SnakeNeuralNetwork = function(snakeDna) {
 	this.biasesDna = snakeDna.biasesDna;
 	
 	// partial road info
-	this.inputNum = 20;
-	this.hiddenLayer0NodeNum = 40;
-	this.hiddenLayer1NodeNum = 40;
-	this.outputNodeNum = 4;
+	this.inputNum = 10;
+	this.hiddenLayer0NodeNum = 10;
+	this.hiddenLayer1NodeNum = 10;
+	this.hiddenLayer2NodeNum = 10;
+	this.hiddenLayer3NodeNum = 10;
+	this.outputNodeNum = 3;
 	
 	// full road info
 // 	this.inputNum = 1200;
@@ -67,11 +69,13 @@ SnakeNeuralNetwork = function(snakeDna) {
 // 	this.hiddenLayer1NodeNum = 10;
 // 	this.outputNodeNum = 4;
 
-	this.nodeNum = this.hiddenLayer0NodeNum + this.hiddenLayer1NodeNum + this.outputNodeNum;
+// 	this.nodeNum = this.hiddenLayer0NodeNum + this.hiddenLayer1NodeNum + this.hiddenLayer2NodeNum + this.hiddenLayer3NodeNum + this.outputNodeNum;
 	
 	var layer0 = [];
 	var layer1 = [];
 	var layer2 = [];
+	var layer1a = [];
+	var layer1b = [];
 	for (var i = 0; i < this.hiddenLayer0NodeNum; i++) {
 		var nodeWeight = [];
 		for (var j = 0; j < this.inputNum; j++) {
@@ -79,21 +83,57 @@ SnakeNeuralNetwork = function(snakeDna) {
 		}
 		layer0.push(new Node(nodeWeight, this.biasesDna[i]));
 	}
+	
+	var layer0WeightsDnaSize = this.inputNum * this.hiddenLayer0NodeNum
+	var layer0BiasesDnaSize = this.hiddenLayer0NodeNum
 	for (var i = 0; i < this.hiddenLayer1NodeNum; i++) {
 		var nodeWeight2 = [];
 		for (var j = 0; j < this.hiddenLayer0NodeNum; j++) {
-			nodeWeight2.push(this.weightsDna[this.inputNum * this.hiddenLayer0NodeNum + i * this.hiddenLayer0NodeNum + j]);
+			nodeWeight2.push(this.weightsDna[layer0WeightsDnaSize + i * this.hiddenLayer0NodeNum + j]);
 		}
-		layer1.push(new Node(nodeWeight2, this.biasesDna[this.hiddenLayer0NodeNum + i]));
+		layer1.push(new Node(nodeWeight2, this.biasesDna[layer0BiasesDnaSize + i]));
 	}
+	
+	var layer1BiasesDnaSize = layer0BiasesDnaSize + this.hiddenLayer1NodeNum
+	var layer1WeightsDnaSize = layer0WeightsDnaSize + this.hiddenLayer0NodeNum * this.hiddenLayer1NodeNum
+	for (var i = 0; i < this.hiddenLayer2NodeNum; i++) {
+		var nodeWeight2a = [];
+		for (var j = 0; j < this.hiddenLayer1NodeNum; j++) {
+			nodeWeight2a.push(this.weightsDna[layer1WeightsDnaSize + i * this.hiddenLayer1NodeNum + j]);
+		}
+		layer1a.push(new Node(nodeWeight2a, this.biasesDna[layer1BiasesDnaSize + i]));
+	}
+	
+	var layer2BiasesDnaSize = layer1BiasesDnaSize + this.hiddenLayer2NodeNum
+	var layer1aWeightsDnaSize = layer1WeightsDnaSize + this.hiddenLayer1NodeNum * this.hiddenLayer2NodeNum
+	for (var i = 0; i < this.hiddenLayer3NodeNum; i++) {
+		var nodeWeight2b = [];
+		for (var j = 0; j < this.hiddenLayer2NodeNum; j++) {
+			nodeWeight2b.push(this.weightsDna[layer1aWeightsDnaSize + i * this.hiddenLayer2NodeNum + j]);
+		}
+		layer1b.push(new Node(nodeWeight2b, this.biasesDna[layer2BiasesDnaSize + i]));
+	}
+	
+	var layer3BiasesDnaSize = layer2BiasesDnaSize + this.hiddenLayer3NodeNum
+	var layer1bWeightsDnaSize = layer1aWeightsDnaSize + this.hiddenLayer2NodeNum * this.hiddenLayer3NodeNum
 	for (var i = 0; i < this.outputNodeNum; i++) {
+		var nodeWeight3 = [];
+		for (var j = 0; j < this.hiddenLayer3NodeNum; j++) {
+			nodeWeight3.push(this.weightsDna[layer1bWeightsDnaSize + i * this.hiddenLayer3NodeNum + j]);
+		}
+		layer2.push(new Node(nodeWeight3, this.biasesDna[layer3BiasesDnaSize + i]));
+	}
+
+	this.neuralNetwork = new NeuralNetwork([new Layer(layer0), new Layer(layer1), new Layer(layer1a), new Layer(layer1b), new Layer(layer2)]);
+	
+/* 	for (var i = 0; i < this.outputNodeNum; i++) {
 		var nodeWeight3 = [];
 		for (var j = 0; j < this.hiddenLayer1NodeNum; j++) {
 			nodeWeight3.push(this.weightsDna[this.inputNum * this.hiddenLayer0NodeNum + this.hiddenLayer0NodeNum + this.hiddenLayer1NodeNum + i * this.hiddenLayer1NodeNum + j]);
 		}
 		layer2.push(new Node(nodeWeight3, this.biasesDna[this.hiddenLayer0NodeNum - this.hiddenLayer1NodeNum + i]));
 	}
-	this.neuralNetwork = new NeuralNetwork([new Layer(layer0), new Layer(layer1), new Layer(layer2)]);
+	this.neuralNetwork = new NeuralNetwork([new Layer(layer0), new Layer(layer1), new Layer(layer2)]); */
 }
 
 // SnakeNeuralNetwork.prototype.setRandomDNA = function() {
