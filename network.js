@@ -36,32 +36,38 @@ NeuralNetwork.prototype.calculate = function(inputs) {
 	for (var i = 1; i < this.layers.length; i++) {
 		outputs.push(this.layers[i].calculate(outputs[i-1]));
 	}
-// 	console.log("outputs:" + outputs.toString());
+// 	console.log("outputs:" +  outputs[this.layers.length - 1]);
 	return outputs[this.layers.length - 1];
 }
 
-SnakeNeuralNetworkDna = function(weights, biases) {
+SnakeNeuralNetworkDna = function(weights, biases, variance) {
 	// biasesDna should have 16 + 16 values
 	// weightsDna should have 16 * 16 + 16 * 16 + 16 * 3 values
 	this.weightsDna = weights;
 	this.biasesDna = biases;
+	this.variance = variance;
 }
 
-SnakeNeuralNetwork = function(snakeDna) {
+SnakeNeuralNetwork = function(snakeDna, layerNumNodes) {
 	// Specific for Snake
 	// need to set the DNA and then setNetwork() before calculate
 	// this.inputNum input -> 16 node for hidden layer -> this.outputNodeNum node for output
 // 	this.dna = []
 	this.weightsDna = snakeDna.weightsDna;
 	this.biasesDna = snakeDna.biasesDna;
+// 	console.log(this.weightsDna.length + " " + this.biasesDna.length)
+	this.layerNumNodes = layerNumNodes;
+// 	console.log(layerNumNodes);
 	
+// 	console.log(weightsDna)
 	// partial road info
-	this.inputNum = 10;
-	this.hiddenLayer0NodeNum = 10;
-	this.hiddenLayer1NodeNum = 10;
-	this.hiddenLayer2NodeNum = 10;
-	this.hiddenLayer3NodeNum = 10;
-	this.outputNodeNum = 3;
+	// layerNumNodes = [10, 10, 10, 10, 10, 3]
+// 	this.inputNum = 10;
+// 	this.hiddenLayer0NodeNum = 10;
+// 	this.hiddenLayer1NodeNum = 10;
+// 	this.hiddenLayer2NodeNum = 10;
+// 	this.hiddenLayer3NodeNum = 10;
+// 	this.outputNodeNum = 3;
 	
 	// full road info
 // 	this.inputNum = 1200;
@@ -71,11 +77,16 @@ SnakeNeuralNetwork = function(snakeDna) {
 
 // 	this.nodeNum = this.hiddenLayer0NodeNum + this.hiddenLayer1NodeNum + this.hiddenLayer2NodeNum + this.hiddenLayer3NodeNum + this.outputNodeNum;
 	
-	var layer0 = [];
-	var layer1 = [];
-	var layer2 = [];
-	var layer1a = [];
-	var layer1b = [];
+	// at least 1 layer
+	var layers = [];
+	
+// 	var layer0 = [];
+// 	var layer1 = [];
+// 	var layer2 = [];
+// 	var layer1a = [];
+// 	var layer1b = [];
+	
+/* 	var layer0 = [];
 	for (var i = 0; i < this.hiddenLayer0NodeNum; i++) {
 		var nodeWeight = [];
 		for (var j = 0; j < this.inputNum; j++) {
@@ -83,7 +94,48 @@ SnakeNeuralNetwork = function(snakeDna) {
 		}
 		layer0.push(new Node(nodeWeight, this.biasesDna[i]));
 	}
+	layers.push(new Layer(layer0)); */
+	/*
+	var layer0 = [];
+	for (var i = 0; i < this.hiddenLayer0NodeNum; i++) {
+		var nodeWeight = [];
+		for (var j = 0; j < this.inputNum; j++) {
+			nodeWeight.push(this.weightsDna[i * this.inputNum + j]);
+		}
+		layer0.push(new Node(nodeWeight, this.biasesDna[i]));
+	}
+	layers.push(new Layer(layer0));
+*/
+	var layer0WeightsDnaSize = 0
+	var layer0BiasesDnaSize = 0
 	
+	for (var layerIndex = 0; layerIndex < layerNumNodes.length - 1; layerIndex++) {
+		var layer1 = [];
+		if (layerIndex > 0) {
+// 		var layer0WeightsDnaSize = this.inputNum * this.hiddenLayer0NodeNum
+			layer0WeightsDnaSize += this.layerNumNodes[layerIndex - 1] * this.layerNumNodes[layerIndex];
+// 		var layer0BiasesDnaSize = this.hiddenLayer0NodeNum
+			layer0BiasesDnaSize += this.layerNumNodes[layerIndex];
+		}
+// 		for (var i = 0; i < this.hiddenLayer1NodeNum; i++) {
+		for (var i = 0; i < this.layerNumNodes[layerIndex + 1]; i++) {
+			var nodeWeight2 = [];
+// 			for (var j = 0; j < this.hiddenLayer0NodeNum; j++) {
+			for (var j = 0; j < this.layerNumNodes[layerIndex]; j++) {
+// 				nodeWeight2.push(this.weightsDna[layer0WeightsDnaSize + i * this.hiddenLayer0NodeNum + j]);
+/* 				console.log(this.weightsDna[layer0WeightsDnaSize + i * this.layerNumNodes[layerIndex] + j]); */
+// 				console.log(layer0WeightsDnaSize + i * this.layerNumNodes[layerIndex] + j)
+				nodeWeight2.push(this.weightsDna[layer0WeightsDnaSize + i * this.layerNumNodes[layerIndex] + j]);
+			}
+// 			layer1.push(new Node(nodeWeight2, this.biasesDna[layer0BiasesDnaSize + i]));
+			layer1.push(new Node(nodeWeight2, this.biasesDna[layer0BiasesDnaSize + i]));
+		}
+// 		console.log(layerIndex + " " + layer1)
+		layers.push(new Layer(layer1));
+	}
+
+	
+	/*
 	var layer0WeightsDnaSize = this.inputNum * this.hiddenLayer0NodeNum
 	var layer0BiasesDnaSize = this.hiddenLayer0NodeNum
 	for (var i = 0; i < this.hiddenLayer1NodeNum; i++) {
@@ -125,7 +177,8 @@ SnakeNeuralNetwork = function(snakeDna) {
 	}
 
 	this.neuralNetwork = new NeuralNetwork([new Layer(layer0), new Layer(layer1), new Layer(layer1a), new Layer(layer1b), new Layer(layer2)]);
-	
+	*/
+	this.neuralNetwork = new NeuralNetwork(layers);
 /* 	for (var i = 0; i < this.outputNodeNum; i++) {
 		var nodeWeight3 = [];
 		for (var j = 0; j < this.hiddenLayer1NodeNum; j++) {
@@ -187,7 +240,7 @@ SnakeNeuralNetwork.prototype.calculate = function(snake, fruit) {
 //	var roadInfo = snake.getRoadInfo2(fruit); // full info, 1200 input info
 	
 	if (!snake.isDead && roadInfo[1] == Number(1)){
-		console.log("index=" + snake.index + ",snake{x=" + snake.x + ", y=" + snake.y + ", dir=" + snake.direction + "}, fruit{x=" + fruit.x + ", y=" + fruit.y + "} + road=" + roadInfo.toString());
+//		console.log("index=" + snake.index + ",snake{x=" + snake.x + ", y=" + snake.y + ", dir=" + snake.direction + "}, fruit{x=" + fruit.x + ", y=" + fruit.y + "} + road=" + roadInfo.toString());
 	}
 	
 // 	var dna = snake.dna;

@@ -9,18 +9,31 @@ function setup() {
 	bodySize = 5;
 	fruits = [];
 	snakes = [];
+	kingDisplayDna = [];
+	hasKing = false;
 // 	network = new SnakeNeuralNetwork();
 
 //  part road info
-	var numInput = 10;
-	var numLayer0 = 10;
-	var numLayer1 = 10;
-	var numLayer2 = 10;
-	var numLayer3 = 10;
-	var numOutput = 3;
+// 	var numInput = 10;
+// 	var numLayer0 = 10;
+// 	var numLayer1 = 10;
+// 	var numLayer2 = 10;
+// 	var numLayer3 = 10;
+// 	var numOutput = 3;
+	
+	
+	
+	layersNums = [15, 7, 7, 7, 3]
+	
+	dnaBiasesSize = 0;
+	dnaWeightsSize = 0;
+	for (var i = 0; i < layersNums.length - 1; i++) {
+		dnaWeightsSize += layersNums[i] * layersNums[i + 1]
+		dnaBiasesSize += layersNums[i + 1]
+	}
 
-	dnaWeightsSize = numInput*numLayer0 + numLayer0*numLayer1 + numLayer1*numLayer2 + numLayer2*numLayer3 + numLayer3*numOutput;
-	dnaBiasesSize = numLayer0 + numLayer1 + numLayer2 + numLayer3 + numOutput;
+// 	dnaWeightsSize = numInput*numLayer0 + numLayer0*numLayer1 + numLayer1*numLayer2 + numLayer2*numLayer3 + numLayer3*numOutput;
+// 	dnaBiasesSize = numLayer0 + numLayer1 + numLayer2 + numLayer3 + numOutput;
 	
 	// full road info
 // 	dnaWeightsSize = 1200*20 + 20*10 + 10*4;
@@ -80,7 +93,7 @@ function fullyRandomGenerateSnakeAndDna() {
 	for (var i = 0; i < numCol; i++) {
 		for (var j = 0; j < numRow; j++) {
 			var fruit = new Fruit(j * canvasWidth, i * canvasWidth, canvasWidth, canvasHeight, bodySize);	
-			var snake = new Snake(i * numCol + j, canvasWidth/2, canvasHeight/2, j * canvasWidth, i * canvasWidth, canvasWidth, canvasHeight, bodySize, generateDna(dnaWeightsSize, dnaBiasesSize), 'random');
+			var snake = new Snake(i * numCol + j, canvasWidth/2, canvasHeight/2, j * canvasWidth, i * canvasWidth, canvasWidth, canvasHeight, bodySize, generateDna(dnaWeightsSize, dnaBiasesSize), 'random', layersNums);
 			fruit.createRandomLocWithSnake(snake);
 			fruits.push(fruit);
 			snakes.push(snake);
@@ -102,6 +115,7 @@ function loopGen() {
 		}
 		*/
 		fullyRandomGenerateSnakeAndDna();
+		hasKing = false;
 	}
 	else {
 // 		console.log("aaaz");
@@ -121,6 +135,7 @@ function loopGen() {
 			}
 		}*/
 			fullyRandomGenerateSnakeAndDna();
+			hasKing = false;
 		}
 		else {
 			/*
@@ -165,11 +180,33 @@ function loopGen() {
 		var snake4th = getHighestSnake(sortable, 3);
 		var snake5th = getHighestSnake(sortable, 4);
 		var snake6th = getHighestSnake(sortable, 5);				
-
+		var snake7th = getHighestSnake(sortable, 6);
+		var snake8th = getHighestSnake(sortable, 7);				
 		if (snake1st.score > maxFitness) {
 			maxFitness = snake1st.score;
 		}
+		snake1st.snakeDna.variance = 'N/A'
+		snake2nd.snakeDna.variance = 'N/A'
+		snake3rd.snakeDna.variance = 'N/A'
+		snake4th.snakeDna.variance = 'N/A'
+		snake5th.snakeDna.variance = 'N/A'
+		snake6th.snakeDna.variance = 'N/A'
+		snake7th.snakeDna.variance = 'N/A'
+		snake8th.snakeDna.variance = 'N/A'
+		
+		hasKing = true;
+		kingDisplayDna = [];
+		for (var i = 0; i < snake1st.snakeDna.weightsDna.length; i++){
+			kingDisplayDna.push(Math.round(snake1st.snakeDna.weightsDna[i]));			
+		}
+		for (var i = 0; i < snake1st.snakeDna.biasesDna.length; i++){
+			kingDisplayDna.push(Math.round(snake1st.snakeDna.biasesDna[i]));
+		}
+// 		console.log(gen + ": " + kingDisplayDna.slice(0, 30))
 /*
+
+
+		snake1st.snakeDna.variance = 'N/A'
 			dnaWeightsKing = []
 			dnaBiasesKing = []
 			for (var i = 0; i < snake1st.snakeDna.weightsDna.length; i++) {
@@ -191,7 +228,8 @@ function loopGen() {
 		genes.push({dna: snake4th.snakeDna, dnaType: '4th'});
 		genes.push({dna: snake5th.snakeDna, dnaType: '5th'});
 		genes.push({dna: snake6th.snakeDna, dnaType: '6th'});		
-		
+		genes.push({dna: snake7th.snakeDna, dnaType: '7th'});
+		genes.push({dna: snake8th.snakeDna, dnaType: '8th'});				
 		
 //		var snake1 = getHighestSnake(sortable, Math.floor(0));
 //		var snake2 = getHighestSnake(sortable, Math.floor(1));
@@ -215,26 +253,56 @@ function loopGen() {
 			genes.push({dna: geneChildren.dna, dnaType: geneChildren.dnaType});
 		}
 		*/
-		for (var i = 0; i < 15; i++) {
-			var snake1 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
-			var snake2 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
-			var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, false);
+		var numHighestSnakeToCross = 4;
+		
+		for (var i = 0; i < 7; i++) {
+			var rank1Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var rank2Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var snake1 = getHighestSnake(sortable, rank1Index);
+			var snake2 = getHighestSnake(sortable, rank2Index);
+			var geneChildren = ga.uniformCrossover(rank1Index, rank2Index, snake1, snake2, false, false);
 // 						var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, "uniform crossover");
 			var geneChild1 = {dna: geneChildren.gene1.dna, dnaType: geneChildren.gene1.dnaType};
 			var geneChild2 = {dna: geneChildren.gene2.dna, dnaType: geneChildren.gene2.dnaType}
 			genes.push(geneChild1);
 			genes.push(geneChild2);
 		}
-		for (var i = 0; i < 14; i++) {
-			var snake1 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
-			var snake2 = getHighestSnake(sortable, Math.floor(Math.random() * 6));
-			var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, true);
+		for (var i = 0; i < 7; i++) {
+			var rank1Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var rank2Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var snake1 = getHighestSnake(sortable, rank1Index);
+			var snake2 = getHighestSnake(sortable, rank2Index);
+			var geneChildren = ga.uniformCrossover(rank1Index, rank2Index, snake1, snake2, false, true);
 // 						var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, "uniform crossover");
 			var geneChild1 = {dna: geneChildren.gene1.dna, dnaType: geneChildren.gene1.dnaType};
 			var geneChild2 = {dna: geneChildren.gene2.dna, dnaType: geneChildren.gene2.dnaType}
 			genes.push(geneChild1);
 			genes.push(geneChild2);
 		}
+		for (var i = 0; i < 7; i++) {
+			var rank1Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var rank2Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var snake1 = getHighestSnake(sortable, rank1Index);
+			var snake2 = getHighestSnake(sortable, rank2Index);
+			var geneChildren = ga.uniformCrossover(rank1Index, rank2Index, snake1, snake2, true, false);
+// 						var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, "uniform crossover");
+			var geneChild1 = {dna: geneChildren.gene1.dna, dnaType: geneChildren.gene1.dnaType};
+			var geneChild2 = {dna: geneChildren.gene2.dna, dnaType: geneChildren.gene2.dnaType}
+			genes.push(geneChild1);
+			genes.push(geneChild2);
+		}
+		for (var i = 0; i < 7; i++) {
+			var rank1Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var rank2Index = Math.floor(Math.random() * numHighestSnakeToCross);
+			var snake1 = getHighestSnake(sortable, rank1Index);
+			var snake2 = getHighestSnake(sortable, rank2Index);
+			var geneChildren = ga.uniformCrossover(rank1Index, rank2Index, snake1, snake2, true, true);
+// 						var geneChildren = ga.uniformCrossover(snake1.snakeDna, snake2.snakeDna, "uniform crossover");
+			var geneChild1 = {dna: geneChildren.gene1.dna, dnaType: geneChildren.gene1.dnaType};
+			var geneChild2 = {dna: geneChildren.gene2.dna, dnaType: geneChildren.gene2.dnaType}
+			genes.push(geneChild1);
+			genes.push(geneChild2);
+		}		
 		
 		
 		
@@ -304,7 +372,7 @@ function loopGen() {
 		for (var i = 0; i < numCol; i++) {
 			for (var j = 0; j < numRow; j++) {
 				var fruit = new Fruit(j * canvasWidth, i * canvasWidth, canvasWidth, canvasHeight, bodySize);	
-				var snake = new Snake(i * numCol + j, canvasWidth/2, canvasHeight/2, j * canvasWidth, i * canvasWidth, canvasWidth, canvasHeight, bodySize, genes[i * numCol + j].dna, genes[i * numCol + j].dnaType);
+				var snake = new Snake(i * numCol + j, canvasWidth/2, canvasHeight/2, j * canvasWidth, i * canvasWidth, canvasWidth, canvasHeight, bodySize, genes[i * numCol + j].dna, genes[i * numCol + j].dnaType, layersNums);
 				fruit.createRandomLocWithSnake(snake);
 				fruits.push(fruit);
 				snakes.push(snake);
@@ -335,7 +403,7 @@ function generateDna(dnaWeightsSize, dnaBiasesSize) {
 		biasesDna.push(Math.random() * 80 - 40);
 	}
 // 	console.log("dna: " + dna);
-	return new SnakeNeuralNetworkDna(weightsDna, biasesDna);
+	return new SnakeNeuralNetworkDna(weightsDna, biasesDna, 'N/A');
 }
 
 function allDead() {
@@ -349,6 +417,7 @@ function allDead() {
 
 function draw() {
 	background(0, 0, 0);
+	stroke(255, 255, 255)
 // 	stroke(255, 255, 255);
 // 	line(400, 0, 400, 400);
 // 	line(200, 0, 200, 400);
@@ -364,7 +433,22 @@ function draw() {
 	text("Snake", 800 + 10, 30);
 	text("Score", 800 + 50, 30);
 	text("Health", 800 + 90, 30);
-	text("DNA", 800 + 130, 30);
+	text("Variance", 800 + 130, 30);
+	text("DNA", 800 + 180, 30);
+	if (hasKing) {
+// 		text(kingDisplayDna, 10, 800 + 10)
+// 		console.log(gen + ": " + kingDisplayDna)
+	}
+// 	text(kingDisplayDna.weightsDna, 10, 800 + 10)
+	
+// 	var highScoreIndex = []
+	var sortable = sortScore(snakes);
+// 	var snake1st = getHighestSnake(sortable, 0);
+	var snakeScore1stIndex = getHighestSnake(sortable, 0).index;
+	var snakeScore2ndIndex = getHighestSnake(sortable, 1).index;
+	var snakeScore3rdIndex = getHighestSnake(sortable, 2).index;	
+	var snakeScore4thIndex = getHighestSnake(sortable, 3).index;	
+	
 	for (var i = 0; i < fruits.length; i++) {
 		var lineX1 = fruits[i].canvasX;
 		var lineY1 = fruits[i].canvasY;
@@ -378,10 +462,25 @@ function draw() {
 		
 		fill(255);
 		textSize(10);
-		text(i + ": ", 800 + 10, i * 12 + 40);
+		if (i == snakeScore1stIndex){
+			stroke(255, 0, 0)
+		} else if (i == snakeScore2ndIndex){
+			stroke(0, 255, 0)
+		} else if (i == snakeScore3rdIndex){
+			stroke(0, 0, 255)
+		} else if (i == snakeScore4thIndex){
+			stroke(255, 255, 0)
+		} else {
+			stroke(255, 255, 255)
+		}
+
+		text((i + 1) + ": ", 800 + 10, i * 12 + 40);
 		text(snakes[i].score, 800 + 50, i * 12 + 40);
 		text(snakes[i].health, 800 + 90, i * 12 + 40);
-		text(snakes[i].dnaType, 800 + 130, i * 12 + 40);
+		text(snakes[i].snakeDna.variance, 800 + 130, i * 12 + 40);
+		text(snakes[i].dnaType, 800 + 180, i * 12 + 40);
+// 				text(snakes[i].snakeDna.variance, 800 + 340, i * 12 + 40);
+// 		text(snakes[i].snakeDna.variance, 800 + 340, i * 12 + 40);
 //		console.log(lineX1 + " " + lineY1 + " " + lineX1 + " " + lineY2);
 //		console.log(lineX1 + " " + lineY1 + " " + lineX2 + " " + lineY1);
 //		console.log(lineX2 + " " + lineY1 + " " + lineX2 + " " + lineY2);
@@ -513,7 +612,19 @@ function draw() {
 // 				isDead = true;
 			snakes[i].eat(fruits[i]);
 			if (!(snakes[i].isDead)) {
+				if (i == snakeScore1stIndex){
+					fill(255, 0, 0)
+				} else if (i == snakeScore2ndIndex){
+					fill(0, 255, 0)
+				} else if (i == snakeScore3rdIndex){
+					fill(0, 0, 255)
+				} else if (i == snakeScore4thIndex){
+					fill(255, 255, 0)
+				} else {
+					fill(255, 255, 255)
+				}
 				snakes[i].draw();
+				fill(255, 255, 255)
 				fruits[i].draw();				
 			}
 		}
